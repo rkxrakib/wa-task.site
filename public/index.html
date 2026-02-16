@@ -1,84 +1,122 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp Task - ইনকাম করুন</title>
+    <title>Money4U - Platform</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #ece5dd; text-align: center; margin: 0; padding: 20px; }
-        .container { background: white; max-width: 400px; margin: auto; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h1 { color: #075e54; margin-bottom: 10px; }
-        p { color: #555; font-size: 14px; }
-        input { width: 90%; padding: 12px; margin: 20px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
-        button { background: #25d366; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; }
-        button:hover { background: #128c7e; }
-        #codeDisplay { margin-top: 30px; display: none; }
-        .pairing-code { font-size: 32px; font-weight: bold; color: #d32f2f; letter-spacing: 5px; background: #f9f9f9; padding: 15px; border: 2px dashed #25d366; display: inline-block; margin-top: 10px; }
-        .step { text-align: left; font-size: 13px; color: #333; margin-top: 20px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
+        body { background-color: #f4f7fe; }
+        .header { background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%); color: white; padding: 20px; text-align: center; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; }
+        .container { padding: 15px; }
+        .card { background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; }
+        button { width: 100%; padding: 12px; background: #6f42c1; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .tab-content { display: none; }
+        .active { display: block; }
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; display: flex; background: white; border-top: 1px solid #eee; padding: 10px 0; }
+        .bottom-nav div { flex: 1; text-align: center; font-size: 12px; color: #888; cursor: pointer; }
+        .pairing-box { font-size: 24px; color: #e91e63; font-weight: bold; text-align: center; margin-top: 10px; letter-spacing: 3px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>WhatsApp Task</h1>
-    <p>আপনার হোয়াটসঅ্যাপ ভাড়া দিন এবং প্রতিদিন পয়েন্ট ইনকাম করুন।</p>
-    
-    <input type="text" id="phone" placeholder="88017XXXXXXXX">
-    <button onclick="generateCode()" id="btn">কোড পান</button>
+<!-- Login/Register Page -->
+<div id="auth-page" class="container">
+    <div class="header"><h2>Money4U Login</h2></div>
+    <div class="card" style="margin-top: 20px;">
+        <input id="auth-phone" type="text" placeholder="Phone Number">
+        <input id="auth-pass" type="password" placeholder="Password">
+        <button onclick="handleAuth('login')">Login</button>
+        <p style="text-align:center; margin-top:15px; font-size:14px; color:#666;" onclick="handleAuth('register')">Don't have an account? Register Now</p>
+    </div>
+</div>
 
-    <div id="loading" style="display:none; margin-top: 20px;">অপেক্ষা করুন... কোড জেনারেট হচ্ছে...</div>
-
-    <div id="codeDisplay">
-        <p>আপনার পেয়ারিং কোড:</p>
-        <div class="pairing-code" id="pairCode">XXXX-XXXX</div>
-        <div class="step">
-            <strong>কিভাবে কানেক্ট করবেন:</strong><br>
-            ১. হোয়াটসঅ্যাপ ওপেন করুন।<br>
-            ২. ৩টি ডট (Settings) এ ক্লিক করুন।<br>
-            ৩. <b>Linked Devices</b> এ যান।<br>
-            ৪. <b>Link a Device</b> সিলেক্ট করুন।<br>
-            ৫. নিচে <b>Link with phone number instead</b> এ ক্লিক করুন।<br>
-            ৬. উপরের কোডটি সেখানে বসান।
+<!-- Home Page -->
+<div id="home-page" class="tab-content">
+    <div class="header">
+        <h3 id="display-user-phone">019XXXXXXX</h3>
+        <p>Balance: <span id="balance">0.00</span></p>
+    </div>
+    <div class="container">
+        <div class="card" onclick="showTab('task-page')">
+            <h4 style="color:#25d366">WhatsApp Message Task</h4>
+            <p style="font-size:12px; color:#888;">Start hanging to earn points</p>
+            <button style="background:#25d366; margin-top:10px;">Start Now</button>
         </div>
     </div>
 </div>
 
+<!-- Task Page -->
+<div id="task-page" class="tab-content container">
+    <div class="card">
+        <h3>Message Task</h3>
+        <p style="font-size:13px;">Enter WhatsApp number to get pairing code:</p>
+        <input id="wa-number" type="text" placeholder="88017XXXXXXXX">
+        <button onclick="getPairingCode()">Get Pairing Code</button>
+        <div id="code-loading" style="display:none; text-align:center; margin-top:10px;">Generating Code...</div>
+        <div class="pairing-box" id="pairing-code"></div>
+    </div>
+</div>
+
+<!-- Bottom Navigation -->
+<div id="nav-bar" class="bottom-nav" style="display:none;">
+    <div onclick="showTab('home-page')">🏠<br>Home</div>
+    <div onclick="showTab('task-page')">📋<br>Task</div>
+    <div onclick="showTab('auth-page'); location.reload();">👤<br>Logout</div>
+</div>
+
 <script>
-    async function generateCode() {
-        const phone = document.getElementById('phone').value;
-        const btn = document.getElementById('btn');
-        const loading = document.getElementById('loading');
-        const codeDisplay = document.getElementById('codeDisplay');
-        const pairCode = document.getElementById('pairCode');
+    let loggedInPhone = "";
 
-        if(!phone || phone.length < 10) {
-            alert("সঠিক নাম্বার দিন!");
-            return;
-        }
+    async function handleAuth(type) {
+        const phone = document.getElementById('auth-phone').value;
+        const password = document.getElementById('auth-pass').value;
 
-        btn.disabled = true;
-        loading.style.display = 'block';
-        codeDisplay.style.display = 'none';
+        const res = await fetch(`/api/${type}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({phone, password})
+        });
+        const data = await res.json();
 
-        try {
-            // Render-এ ডেপ্লয় করার পর এখানে আপনার Render URL হবে
-            const response = await fetch(`/get-code?number=${phone}`);
-            const data = await response.json();
-
-            loading.style.display = 'none';
-            btn.disabled = false;
-
-            if(data.code) {
-                pairCode.innerText = data.code;
-                codeDisplay.style.display = 'block';
-            } else {
-                alert(data.error || "সমস্যা হয়েছে। আবার চেষ্টা করুন।");
+        if(data.success) {
+            alert(type + " successful!");
+            if(type === 'login') {
+                loggedInPhone = phone;
+                document.getElementById('display-user-phone').innerText = phone;
+                document.getElementById('balance').innerText = data.balance;
+                document.getElementById('auth-page').style.display = 'none';
+                document.getElementById('nav-bar').style.display = 'flex';
+                showTab('home-page');
             }
-        } catch (err) {
-            loading.style.display = 'none';
-            btn.disabled = false;
-            alert("সার্ভার কানেক্ট হতে পারছে না!");
+        } else {
+            alert(data.error);
         }
+    }
+
+    async function getPairingCode() {
+        const waNum = document.getElementById('wa-number').value;
+        const codeDiv = document.getElementById('pairing-code');
+        const loading = document.getElementById('code-loading');
+
+        loading.style.display = 'block';
+        codeDiv.innerText = '';
+
+        const res = await fetch(`/api/get-code?number=${waNum}&userPhone=${loggedInPhone}`);
+        const data = await res.json();
+
+        loading.style.display = 'none';
+        if(data.code) {
+            codeDiv.innerText = data.code;
+        } else {
+            alert(data.error);
+        }
+    }
+
+    function showTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
     }
 </script>
 
