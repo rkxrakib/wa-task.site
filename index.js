@@ -1,79 +1,89 @@
 const express = require('express');
-const { default: makeWASocket, useMultiFileAuthState, delay, fetchLatestBaileysVersion, makeCacheableSignalKeyStore } = require("@whiskeysockets/baileys");
-const pino = require("pino");
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+const { default: makeWASocket, useMultiFileAuthState, delay } = require("@whiskeysockets/baileys");
+const pino = require('pino');
 const cors = require('cors');
-const fs = require('fs');
+const path = require('path');
 
 const app = express();
+app.use(express.json());
 app.use(cors());
 app.use(express.static('public'));
 
-app.get('/get-code', async (req, res) => {
-    let phone = req.query.number;
-    if (!phone) return res.status(400).json({ error: "নাম্বার দিন!" });
+// --- মঙ্গোডিবি কানেকশন ---
+// নিচে <db_password> এর জায়গায় আপনার মঙ্গোডিবি পাসওয়ার্ড দিন
+const MONGO_URL = "mongodb+srv://rkxrakib:<rkxrakib999>@cluster0.841rfpv.mongodb.net/?appName=Cluster0";
 
-    // শুধুমাত্র সংখ্যাগুলো রাখা (যেমন: 88017...)
-    phone = phone.replace(/[^0-9]/g, '');
+mongoose.connect(MONGO_URL)
+    .then(() => console.log("Database Connected Successfully"))
+    .catch(err => console.log("DB Connection Error: ", err));
 
-    // যদি নাম্বারটি ৮৮ ছাড়া হয় (বাংলাদেশের জন্য), তবে ৮৮ যোগ করে দিন
-    if (phone.startsWith('01')) {
-        phone = '88' + phone;
-    }
+// ইউজার ডাটাবেস মডেল
+const UserSchema = new mongoose.Schema({
+    phone: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    balance: { type: Number, default: 0 },
+    points: { type: Number, default: 0 },
+    status: { type: String, default: "offline" }
+});
+const User = mongoose.model('User', UserSchema);
 
+// রেজিস্ট্রেশন API
+app.post('/api/register', async (req, res) => {
+    const { phone, password } = req.body;
     try {
-        // পুরনো সেশন থাকলে মুছে ফেলা (যাতে নতুন ফ্রেশ কোড আসে)
-        const sessionPath = `./sessions/${phone}`;
-        if (fs.existsSync(sessionPath)) {
-            fs.rmSync(sessionPath, { recursive: true, force: true });
-        }
-
-        const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
-        const { version } = await fetchLatestBaileysVersion();
-
-        const sock = makeWASocket({
-            version,
-            auth: {
-                creds: state.creds,
-                keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "fatal" })),
-            },
-            printQRInTerminal: false,
-            logger: pino({ level: "fatal" }),
-            browser: ["Ubuntu", "Chrome", "20.0.04"], // এটি গুরুত্বপূর্ণ
-        });
-
-        if (!sock.authState.creds.registered) {
-            // একটু সময় দেওয়া যাতে সকেট রেডি হয়
-            await delay(3000);
-            const code = await sock.requestPairingCode(phone);
-            
-            if (code) {
-                res.json({ code: code });
-            } else {
-                res.status(500).json({ error: "কোড পাওয়া যায়নি। আবার চেষ্টা করুন।" });
-            }
-        } else {
-            res.json({ error: "এই নাম্বার ইতিমধ্যে কানেক্টেড।" });
-        }
-
-        sock.ev.on('creds.update', saveCreds);
-
-        sock.ev.on('connection.update', async (update) => {
-            const { connection, lastDisconnect } = update;
-            if (connection === 'open') {
-                console.log(`নাম্বার কানেক্ট হয়েছে: ${phone}`);
-                // এখানে আপনি মেসেজ পাঠাতে পারেন নিশ্চিত করার জন্য
-                await sock.sendMessage(phone + "@s.whatsapp.net", { text: "আপনার একাউন্টটি সফলভাবে আমাদের সাইটে কানেক্ট হয়েছে। পয়েন্ট যোগ হওয়া শুরু হয়েছে!" });
-            }
-            if (connection === 'close') {
-                console.log("কানেকশন বিচ্ছিন্ন হয়েছে।");
-            }
-        });
-
-    } catch (err) {
-        console.error("Error:", err);
-        res.status(500).json({ error: "সার্ভার এরর! কিছুক্ষণ পর আবার চেষ্টা করুন।" });
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newUser = new User({ phone, password: hashedPassword });
+        await newUser.save();
+        res.json({ success: true, message: "Registration successful!" });
+    } catch (e) {
+        res.status(400).json({ error: "Number already exists!" });
     }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+// লগইন API
+app.post('/api/login', async (req, res) => {
+    const { phone, password } = req.body;
+    const user = await User.findOne({ phone });
+    if (user && await bcrypt.compare(password, user.password)) {
+        res.json({ success: true, phone: user.phone, balance: user.balance, points: user.points });
+    } else {
+        res.status(400).json({ error: "Invalid phone or password!" });
+    }
+});
+
+// হোয়াটসঅ্যাপ পেয়ারিং কোড জেনারেটর
+app.get('/api/get-code', async (req, res) => {
+    const phone = req.query.number;
+    if(!phone) return res.status(400).json({error: "Phone needed"});
+
+    try {
+        const { state, saveCreds } = await useMultiFileAuthState(`./sessions/${phone}`);
+        const sock = makeWASocket({
+            auth: state,
+            printQRInTerminal: false,
+            logger: pino({ level: "silent" })
+        });
+
+        if (!sock.authState.creds.registered) {
+            await delay(3000);
+            const code = await sock.requestPairingCode(phone);
+            res.json({ code });
+        } else {
+            res.json({ error: "Already logged in" });
+        }
+
+        sock.ev.on('creds.update', saveCreds);
+        sock.ev.on('connection.update', async (update) => {
+            if (update.connection === 'open') {
+                await User.findOneAndUpdate({ phone: req.query.userPhone }, { status: "online" });
+                console.log(`WA Connected for ${phone}`);
+            }
+        });
+    } catch (e) {
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
+app.listen(3000, () => console.log("Server running on port 3000"));
