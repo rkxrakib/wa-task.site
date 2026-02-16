@@ -1,5 +1,5 @@
 {
-  "name": "whatsapp-earning-v2",
+  "name": "whatsapp-earning-firebase",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -8,10 +8,9 @@
   "dependencies": {
     "@whiskeysockets/baileys": "latest",
     "express": "^4.18.2",
-    "mongoose": "^7.0.0",
+    "firebase-admin": "^11.11.0",
     "cors": "^2.8.5",
     "pino": "^8.14.1",
-    "bcryptjs": "^2.4.3",
     "path": "^0.12.7"
   }
 }
