@@ -1,0 +1,16 @@
+{
+  "name": "whatsapp-task-render",
+  "version": "1.0.0",
+  "description": "WhatsApp Pairing Code Site",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "latest",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "pino": "^8.14.1",
+    "path": "^0.12.7"
+  }
+}
