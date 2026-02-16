@@ -1,7 +1,6 @@
 {
-  "name": "whatsapp-task-render",
+  "name": "whatsapp-earning-v2",
   "version": "1.0.0",
-  "description": "WhatsApp Pairing Code Site",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
@@ -9,8 +8,10 @@
   "dependencies": {
     "@whiskeysockets/baileys": "latest",
     "express": "^4.18.2",
+    "mongoose": "^7.0.0",
     "cors": "^2.8.5",
     "pino": "^8.14.1",
+    "bcryptjs": "^2.4.3",
     "path": "^0.12.7"
   }
 }
