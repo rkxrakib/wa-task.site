@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Task - ইনকাম করুন</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #ece5dd; text-align: center; margin: 0; padding: 20px; }
+        .container { background: white; max-width: 400px; margin: auto; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { color: #075e54; margin-bottom: 10px; }
+        p { color: #555; font-size: 14px; }
+        input { width: 90%; padding: 12px; margin: 20px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
+        button { background: #25d366; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; }
+        button:hover { background: #128c7e; }
+        #codeDisplay { margin-top: 30px; display: none; }
+        .pairing-code { font-size: 32px; font-weight: bold; color: #d32f2f; letter-spacing: 5px; background: #f9f9f9; padding: 15px; border: 2px dashed #25d366; display: inline-block; margin-top: 10px; }
+        .step { text-align: left; font-size: 13px; color: #333; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>WhatsApp Task</h1>
+    <p>আপনার হোয়াটসঅ্যাপ ভাড়া দিন এবং প্রতিদিন পয়েন্ট ইনকাম করুন।</p>
+    
+    <input type="text" id="phone" placeholder="88017XXXXXXXX">
+    <button onclick="generateCode()" id="btn">কোড পান</button>
+
+    <div id="loading" style="display:none; margin-top: 20px;">অপেক্ষা করুন... কোড জেনারেট হচ্ছে...</div>
+
+    <div id="codeDisplay">
+        <p>আপনার পেয়ারিং কোড:</p>
+        <div class="pairing-code" id="pairCode">XXXX-XXXX</div>
+        <div class="step">
+            <strong>কিভাবে কানেক্ট করবেন:</strong><br>
+            ১. হোয়াটসঅ্যাপ ওপেন করুন।<br>
+            ২. ৩টি ডট (Settings) এ ক্লিক করুন।<br>
+            ৩. <b>Linked Devices</b> এ যান।<br>
+            ৪. <b>Link a Device</b> সিলেক্ট করুন।<br>
+            ৫. নিচে <b>Link with phone number instead</b> এ ক্লিক করুন।<br>
+            ৬. উপরের কোডটি সেখানে বসান।
+        </div>
+    </div>
+</div>
+
+<script>
+    async function generateCode() {
+        const phone = document.getElementById('phone').value;
+        const btn = document.getElementById('btn');
+        const loading = document.getElementById('loading');
+        const codeDisplay = document.getElementById('codeDisplay');
+        const pairCode = document.getElementById('pairCode');
+
+        if(!phone || phone.length < 10) {
+            alert("সঠিক নাম্বার দিন!");
+            return;
+        }
+
+        btn.disabled = true;
+        loading.style.display = 'block';
+        codeDisplay.style.display = 'none';
+
+        try {
+            // Render-এ ডেপ্লয় করার পর এখানে আপনার Render URL হবে
+            const response = await fetch(`/get-code?number=${phone}`);
+            const data = await response.json();
+
+            loading.style.display = 'none';
+            btn.disabled = false;
+
+            if(data.code) {
+                pairCode.innerText = data.code;
+                codeDisplay.style.display = 'block';
+            } else {
+                alert(data.error || "সমস্যা হয়েছে। আবার চেষ্টা করুন।");
+            }
+        } catch (err) {
+            loading.style.display = 'none';
+            btn.disabled = false;
+            alert("সার্ভার কানেক্ট হতে পারছে না!");
+        }
+    }
+</script>
+
+</body>
+</html>
